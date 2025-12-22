@@ -56,23 +56,27 @@ const WeatherSystem: React.FC<WeatherSystemProps> = ({ mode }) => {
     const snowCount = 4000;
     const snowPos = new Float32Array(snowCount * 3);
     const snowRand = new Float32Array(snowCount);
+    
+    // Increased spread for better immersion
     for(let i=0; i<snowCount; i++) {
-      snowPos[i*3] = (Math.random() - 0.5) * 400;
-      snowPos[i*3+1] = (Math.random() - 0.5) * 300;
-      snowPos[i*3+2] = (Math.random() - 0.5) * 300;
+      snowPos[i*3] = (Math.random() - 0.5) * 600;     // X
+      snowPos[i*3+1] = (Math.random() - 0.5) * 600;   // Y
+      snowPos[i*3+2] = (Math.random() - 0.5) * 600;   // Z
       snowRand[i] = Math.random() * Math.PI * 2;
     }
     snowGeo.setAttribute('position', new THREE.BufferAttribute(snowPos, 3));
     snowGeo.setAttribute('random', new THREE.BufferAttribute(snowRand, 1));
+    
     const snowMat = new THREE.PointsMaterial({
       color: 0xffffff,
-      size: 1.0,
+      size: 1.5, // Slightly larger
       map: snowTextureRef.current,
       transparent: true,
       opacity: 0.8,
       blending: THREE.AdditiveBlending,
       depthWrite: false
     });
+    
     const snowSystem = new THREE.Points(snowGeo, snowMat);
     snowSystemRef.current = snowSystem;
     scene.add(snowSystem);
@@ -93,17 +97,26 @@ const WeatherSystem: React.FC<WeatherSystemProps> = ({ mode }) => {
 
       // SNOW Logic
       if (snowSystemRef.current) {
+        // Rotate the entire system slightly for cinematic effect
+        snowSystemRef.current.rotation.y = time * 0.05; 
+
         const pos = snowSystemRef.current.geometry.attributes.position.array as Float32Array;
         const rand = snowSystemRef.current.geometry.attributes.random.array as Float32Array;
+        
         for(let i=0; i<snowCount; i++) {
-          pos[i*3+1] -= 0.1; // Fall speed
-          pos[i*3] += Math.sin(time + rand[i]) * 0.05; // Drift
+          // Increase fall speed (was 0.1, now 0.7 for clear visibility)
+          pos[i*3+1] -= 0.7; 
           
-          // Reset when falls below view
-          if (pos[i*3+1] < -150) {
-              pos[i*3+1] = 150;
+          // Wind sway
+          pos[i*3] += Math.sin(time + rand[i]) * 0.1; 
+          
+          // Reset loop
+          if (pos[i*3+1] < -300) {
+              pos[i*3+1] = 300;
           }
         }
+        
+        // Critical: Tell Three.js the positions have updated
         snowSystemRef.current.geometry.attributes.position.needsUpdate = true;
       }
 
@@ -115,7 +128,12 @@ const WeatherSystem: React.FC<WeatherSystemProps> = ({ mode }) => {
     return () => {
       window.removeEventListener('resize', onResize);
       if (requestRef.current) cancelAnimationFrame(requestRef.current);
-      if (containerRef.current && rendererRef.current) containerRef.current.removeChild(rendererRef.current.domElement);
+      if (containerRef.current && rendererRef.current) {
+         // Check if child exists before removing to prevent errors in strict mode
+         if (containerRef.current.contains(rendererRef.current.domElement)) {
+            containerRef.current.removeChild(rendererRef.current.domElement);
+         }
+      }
       renderer.dispose();
     };
   }, []);

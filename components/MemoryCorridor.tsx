@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { Flame, RotateCcw, Snowflake, Trash2 } from 'lucide-react';
 import { DiaryEntry } from '../types';
 
 interface MemoryCorridorProps {
@@ -115,7 +116,7 @@ const MemoryCorridor: React.FC<MemoryCorridorProps> = ({
                            className="relative z-50 text-gray-500 hover:text-red-400 transition-colors p-3 rounded-full hover:bg-white/10"
                            title="Move to Bin"
                          >
-                           <span className="text-xl leading-none">🗑️</span>
+                           <Trash2 className="h-5 w-5" aria-hidden="true" />
                          </button>
                        ) : (
                          <>
@@ -128,7 +129,7 @@ const MemoryCorridor: React.FC<MemoryCorridorProps> = ({
                              className="relative z-50 text-gray-500 hover:text-emerald-400 transition-colors p-3 rounded-full hover:bg-white/10"
                              title="Restore"
                            >
-                             <span className="text-xl leading-none">♻️</span>
+                             <RotateCcw className="h-5 w-5" aria-hidden="true" />
                            </button>
                            <button 
                              onClick={(e) => {
@@ -140,7 +141,7 @@ const MemoryCorridor: React.FC<MemoryCorridorProps> = ({
                              className="relative z-50 text-gray-500 hover:text-red-600 transition-colors p-3 rounded-full hover:bg-white/10"
                              title="Delete Forever"
                            >
-                             <span className="text-xl leading-none">💥</span>
+                             <Flame className="h-5 w-5" aria-hidden="true" />
                            </button>
                          </>
                        )}
@@ -182,7 +183,7 @@ const MemoryCorridor: React.FC<MemoryCorridorProps> = ({
                     className="text-gray-500 hover:text-red-400 transition-colors text-xs tracking-widest uppercase flex items-center space-x-2"
                    >
                     <span>Delete</span>
-                    <span className="text-sm">🗑️</span>
+                    <Trash2 className="h-4 w-4" aria-hidden="true" />
                    </button>
                  ) : (
                     <>
@@ -194,7 +195,7 @@ const MemoryCorridor: React.FC<MemoryCorridorProps> = ({
                         className="text-emerald-500 hover:text-emerald-300 transition-colors text-xs tracking-widest uppercase flex items-center space-x-2"
                       >
                         <span>Restore</span>
-                        <span className="text-sm">♻️</span>
+                        <RotateCcw className="h-4 w-4" aria-hidden="true" />
                       </button>
                       <button 
                         onClick={() => {
@@ -205,7 +206,7 @@ const MemoryCorridor: React.FC<MemoryCorridorProps> = ({
                         className="text-red-500 hover:text-red-300 transition-colors text-xs tracking-widest uppercase flex items-center space-x-2"
                       >
                         <span>Erase</span>
-                        <span className="text-sm">💥</span>
+                        <Flame className="h-4 w-4" aria-hidden="true" />
                       </button>
                     </>
                  )}
@@ -225,7 +226,9 @@ const MemoryCorridor: React.FC<MemoryCorridorProps> = ({
                 <article className="max-w-2xl mx-auto">
                     {/* Header */}
                     <header className="mb-16 text-center">
-                      <div className="text-5xl mb-6 opacity-30 animate-pulse-slow">❄</div>
+                      <div className="text-5xl mb-6 opacity-30 animate-pulse-slow flex justify-center">
+                        <Snowflake className="h-12 w-12" aria-hidden="true" />
+                      </div>
                       <h1 className="text-4xl md:text-5xl font-serif text-white italic tracking-wide leading-tight mb-6">
                         {selectedMemory.title}
                       </h1>
