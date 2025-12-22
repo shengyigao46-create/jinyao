@@ -1,0 +1,7 @@
+{
+  "name": "JinYao - The Garden",
+  "description": "A philosophical interactive garden and memory corridor. Engage with AI philosophers in a particle-simulated environment.",
+  "requestFramePermissions": [
+    "microphone"
+  ]
+}
