@@ -3,12 +3,25 @@ import { DiaryEntry } from '../types';
 
 interface MemoryCorridorProps {
   memories: DiaryEntry[];
-  onDelete: (id: string) => void;
+  onDelete: (id: string) => void;         // Soft delete (Move to Trash)
+  onRestore: (id: string) => void;        // Restore from Trash
+  onPermanentDelete: (id: string) => void; // Delete Forever
 }
 
-const MemoryCorridor: React.FC<MemoryCorridorProps> = ({ memories, onDelete }) => {
+const MemoryCorridor: React.FC<MemoryCorridorProps> = ({ 
+  memories, 
+  onDelete, 
+  onRestore, 
+  onPermanentDelete 
+}) => {
   const [selectedIndex, setSelectedIndex] = useState<number | null>(null);
   const [copyStatus, setCopyStatus] = useState<'IDLE' | 'COPIED'>('IDLE');
+  const [viewMode, setViewMode] = useState<'ACTIVE' | 'TRASH'>('ACTIVE');
+
+  // Filter memories based on current view mode
+  const displayedMemories = memories.filter(m => 
+    viewMode === 'TRASH' ? m.isDeleted : !m.isDeleted
+  );
 
   const handleCopy = (text: string) => {
     navigator.clipboard.writeText(text).then(() => {
@@ -17,42 +30,60 @@ const MemoryCorridor: React.FC<MemoryCorridorProps> = ({ memories, onDelete }) =
     });
   };
 
-  const selectedMemory = selectedIndex !== null ? memories[selectedIndex] : null;
-
-  if (memories.length === 0) {
-    return (
-      <div className="flex flex-col items-center justify-center h-full text-gray-400 font-serif z-20 relative animate-fade-in pointer-events-auto">
-        <p className="text-2xl italic tracking-wider">The corridor is silent.</p>
-        <p className="text-sm mt-4 opacity-50 font-sans tracking-widest uppercase">Start a conversation to create a memory.</p>
-      </div>
-    );
-  }
+  const selectedMemory = selectedIndex !== null && displayedMemories[selectedIndex] ? displayedMemories[selectedIndex] : null;
 
   return (
     <>
       <div className="w-full h-full flex flex-col items-center pt-20 pb-12 overflow-hidden relative z-10 pointer-events-auto">
-        {/* Gallery Header */}
-        <h1 className="text-3xl md:text-5xl font-serif text-white/90 mb-12 tracking-[0.2em] drop-shadow-2xl uppercase border-b border-white/10 pb-4">
-          Memory Corridor
-        </h1>
+        {/* Gallery Header & Switcher */}
+        <div className="flex flex-col items-center mb-8 w-full px-8 relative">
+          <h1 className="text-3xl md:text-5xl font-serif text-white/90 tracking-[0.2em] drop-shadow-2xl uppercase">
+            {viewMode === 'ACTIVE' ? 'Memory Corridor' : 'Recycle Bin'}
+          </h1>
+          <div className="mt-6 flex space-x-4 border border-white/10 rounded-full p-1 bg-black/30 backdrop-blur-md">
+             <button 
+               onClick={() => { setViewMode('ACTIVE'); setSelectedIndex(null); }}
+               className={`px-6 py-2 rounded-full text-xs tracking-widest uppercase transition-all ${viewMode === 'ACTIVE' ? 'bg-white/10 text-emerald-300 shadow-lg' : 'text-gray-500 hover:text-white'}`}
+             >
+               Gallery
+             </button>
+             <button 
+               onClick={() => { setViewMode('TRASH'); setSelectedIndex(null); }}
+               className={`px-6 py-2 rounded-full text-xs tracking-widest uppercase transition-all flex items-center space-x-2 ${viewMode === 'TRASH' ? 'bg-white/10 text-red-300 shadow-lg' : 'text-gray-500 hover:text-white'}`}
+             >
+               <span>Bin</span>
+               <span className="opacity-50 text-[10px] ml-1">({memories.filter(m => m.isDeleted).length})</span>
+             </button>
+          </div>
+        </div>
         
+        {/* Empty State */}
+        {displayedMemories.length === 0 && (
+           <div className="flex flex-col items-center justify-center flex-1 text-gray-400 font-serif animate-fade-in">
+             <p className="text-2xl italic tracking-wider opacity-50">
+               {viewMode === 'ACTIVE' ? 'The corridor is silent.' : 'The bin is empty.'}
+             </p>
+           </div>
+        )}
+
         {/* Scrollable Card List */}
+        {displayedMemories.length > 0 && (
         <div className="flex-1 w-full overflow-x-auto overflow-y-hidden flex items-center px-8 md:px-20 space-x-12 scrollbar-hide snap-x z-20 pb-8">
-          {memories.map((memory, index) => (
+          {displayedMemories.map((memory, index) => (
             <div 
               key={memory.id}
               onClick={() => setSelectedIndex(index)}
               className="group relative flex-shrink-0 w-80 h-[500px] cursor-pointer transform transition-all duration-500 hover:-translate-y-4 hover:rotate-1 snap-center perspective-1000"
             >
               {/* Glass Tablet Card */}
-              <div className="absolute inset-0 glass-panel rounded-sm border border-white/10 group-hover:border-white/40 group-hover:bg-white/5 transition-all shadow-2xl flex flex-col p-8 overflow-hidden bg-gradient-to-b from-white/5 to-transparent backdrop-blur-md">
+              <div className={`absolute inset-0 glass-panel rounded-sm border transition-all shadow-2xl flex flex-col p-8 overflow-hidden bg-gradient-to-b backdrop-blur-md ${viewMode === 'TRASH' ? 'from-red-900/10 to-transparent border-red-500/10' : 'from-white/5 to-transparent border-white/10 group-hover:border-white/40 group-hover:bg-white/5'}`}>
                  
                  {/* Decorative Line */}
-                 <div className="w-8 h-1 bg-emerald-500/50 mb-8 self-start"></div>
+                 <div className={`w-8 h-1 mb-8 self-start ${viewMode === 'TRASH' ? 'bg-red-500/30' : 'bg-emerald-500/50'}`}></div>
 
                  {/* Card Top: Time */}
                  <div className="flex flex-col items-start mb-6 opacity-60">
-                    <span className="font-mono text-xs text-emerald-300 tracking-widest uppercase">
+                    <span className={`font-mono text-xs tracking-widest uppercase ${viewMode === 'TRASH' ? 'text-red-300/70' : 'text-emerald-300'}`}>
                        {new Date(memory.timestamp).toLocaleDateString()}
                     </span>
                     <span className="font-mono text-[10px] text-gray-400 mt-1">
@@ -62,37 +93,68 @@ const MemoryCorridor: React.FC<MemoryCorridorProps> = ({ memories, onDelete }) =
                  
                  {/* Card Title */}
                  <div className="flex-1 flex flex-col justify-center">
-                   <h3 className="font-serif text-3xl text-white/90 italic leading-snug group-hover:text-emerald-200 transition-colors line-clamp-4">
+                   <h3 className={`font-serif text-3xl italic leading-snug transition-colors line-clamp-4 ${viewMode === 'TRASH' ? 'text-gray-400' : 'text-white/90 group-hover:text-emerald-200'}`}>
                      {memory.title}
                    </h3>
                  </div>
                  
-                 {/* Card Bottom: Interaction Hint */}
-                 <div className="mt-auto pt-6 border-t border-white/10 flex justify-between items-center">
+                 {/* Card Bottom: Interaction Buttons */}
+                 <div className="mt-auto pt-6 border-t border-white/10 flex justify-between items-center relative z-40">
                      <span className="text-[10px] uppercase tracking-[0.2em] text-gray-400 group-hover:text-white transition-colors">
                        Read Entry ➞
                      </span>
-                     <button 
-                       onClick={(e) => {
-                         e.stopPropagation();
-                         if (confirm('Permanently delete this memory?')) {
-                           onDelete(memory.id);
-                         }
-                       }}
-                       className="text-gray-600 hover:text-red-400 transition-colors p-2 z-20 hover:scale-110"
-                       title="Delete"
-                     >
-                       ✕
-                     </button>
+                     
+                     <div className="flex space-x-2 pointer-events-auto">
+                       {viewMode === 'ACTIVE' ? (
+                         <button 
+                           onClick={(e) => {
+                             e.preventDefault();
+                             e.stopPropagation();
+                             onDelete(memory.id);
+                           }}
+                           className="relative z-50 text-gray-500 hover:text-red-400 transition-colors p-3 rounded-full hover:bg-white/10"
+                           title="Move to Bin"
+                         >
+                           <span className="text-xl leading-none">🗑️</span>
+                         </button>
+                       ) : (
+                         <>
+                           <button 
+                             onClick={(e) => {
+                               e.preventDefault();
+                               e.stopPropagation();
+                               onRestore(memory.id);
+                             }}
+                             className="relative z-50 text-gray-500 hover:text-emerald-400 transition-colors p-3 rounded-full hover:bg-white/10"
+                             title="Restore"
+                           >
+                             <span className="text-xl leading-none">♻️</span>
+                           </button>
+                           <button 
+                             onClick={(e) => {
+                               e.preventDefault();
+                               e.stopPropagation();
+                               // Direct permanent delete without confirmation as requested
+                               onPermanentDelete(memory.id);
+                             }}
+                             className="relative z-50 text-gray-500 hover:text-red-600 transition-colors p-3 rounded-full hover:bg-white/10"
+                             title="Delete Forever"
+                           >
+                             <span className="text-xl leading-none">💥</span>
+                           </button>
+                         </>
+                       )}
+                     </div>
                  </div>
               </div>
             </div>
           ))}
         </div>
+        )}
 
         {/* Navigation Indicator */}
         <div className="mt-4 text-[10px] uppercase tracking-widest text-white/30">
-           {memories.length} Memories Stored
+           {displayedMemories.length} Memories {viewMode === 'TRASH' ? 'in Bin' : 'Stored'}
         </div>
       </div>
 
@@ -105,16 +167,57 @@ const MemoryCorridor: React.FC<MemoryCorridorProps> = ({ memories, onDelete }) =
           <div className="max-w-4xl w-full h-full md:h-[90vh] md:rounded-lg glass-panel border-0 md:border md:border-white/10 shadow-2xl overflow-hidden relative flex flex-col bg-black/80">
             
             {/* Top Toolbar */}
-            <div className="flex justify-between items-center p-6 border-b border-white/10 bg-black/40 backdrop-blur-md z-10">
-               <div className="text-xs font-mono text-emerald-500 tracking-widest uppercase">
-                  Reading Mode
+            <div className={`flex justify-between items-center p-6 border-b border-white/10 z-10 ${viewMode === 'TRASH' ? 'bg-red-900/20' : 'bg-black/40'}`}>
+               <div className={`text-xs font-mono tracking-widest uppercase ${viewMode === 'TRASH' ? 'text-red-400' : 'text-emerald-500'}`}>
+                  {viewMode === 'TRASH' ? 'Deleted Memory' : 'Reading Mode'}
                </div>
-               <button 
-                onClick={() => setSelectedIndex(null)}
-                className="text-white/50 hover:text-white transition-colors text-xs tracking-widest border border-white/10 hover:border-white/50 px-4 py-2 rounded-full uppercase"
-              >
-                Close
-              </button>
+               <div className="flex items-center space-x-6">
+                 
+                 {viewMode === 'ACTIVE' ? (
+                   <button 
+                    onClick={() => {
+                        onDelete(selectedMemory.id);
+                        setSelectedIndex(null);
+                    }}
+                    className="text-gray-500 hover:text-red-400 transition-colors text-xs tracking-widest uppercase flex items-center space-x-2"
+                   >
+                    <span>Delete</span>
+                    <span className="text-sm">🗑️</span>
+                   </button>
+                 ) : (
+                    <>
+                      <button 
+                        onClick={() => {
+                          onRestore(selectedMemory.id);
+                          setSelectedIndex(null);
+                        }}
+                        className="text-emerald-500 hover:text-emerald-300 transition-colors text-xs tracking-widest uppercase flex items-center space-x-2"
+                      >
+                        <span>Restore</span>
+                        <span className="text-sm">♻️</span>
+                      </button>
+                      <button 
+                        onClick={() => {
+                          // Direct permanent delete without confirmation as requested
+                          onPermanentDelete(selectedMemory.id);
+                          setSelectedIndex(null);
+                        }}
+                        className="text-red-500 hover:text-red-300 transition-colors text-xs tracking-widest uppercase flex items-center space-x-2"
+                      >
+                        <span>Erase</span>
+                        <span className="text-sm">💥</span>
+                      </button>
+                    </>
+                 )}
+
+                 <div className="h-4 w-px bg-white/10"></div>
+                 <button 
+                  onClick={() => setSelectedIndex(null)}
+                  className="text-white/50 hover:text-white transition-colors text-xs tracking-widest border border-white/10 hover:border-white/50 px-4 py-2 rounded-full uppercase"
+                >
+                  Close
+                </button>
+               </div>
             </div>
             
             {/* Scrollable Content */}

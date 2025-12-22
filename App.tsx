@@ -30,7 +30,7 @@ const App: React.FC = () => {
   // --- Initialization ---
 
   useEffect(() => {
-    // Load memories
+    // Load memories on mount
     const saved = localStorage.getItem('jinyao_memories');
     if (saved) {
       try {
@@ -142,9 +142,12 @@ const App: React.FC = () => {
     
     try {
       const diary = await generateDiary(messages, weatherMode);
-      const newMemories = [diary, ...memories];
-      setMemories(newMemories);
-      localStorage.setItem('jinyao_memories', JSON.stringify(newMemories));
+      
+      setMemories(prev => {
+        const updated = [diary, ...prev];
+        localStorage.setItem('jinyao_memories', JSON.stringify(updated));
+        return updated;
+      });
       
       // Reset
       setMessages([]);
@@ -170,6 +173,35 @@ const App: React.FC = () => {
   const handleNavClick = (view: 'GARDEN' | 'MEMORY' | 'INFO') => {
     setCurrentView(view);
     setIsMenuOpen(false);
+  };
+
+  // --- Recycle Bin Logic (Direct Persistence) ---
+
+  const handleSoftDelete = (id: string) => {
+    // Moves from Gallery to Bin
+    setMemories(prev => {
+      const updated = prev.map(m => m.id === id ? { ...m, isDeleted: true } : m);
+      localStorage.setItem('jinyao_memories', JSON.stringify(updated));
+      return updated;
+    });
+  };
+
+  const handleRestore = (id: string) => {
+    // Restores from Bin to Gallery
+    setMemories(prev => {
+      const updated = prev.map(m => m.id === id ? { ...m, isDeleted: false } : m);
+      localStorage.setItem('jinyao_memories', JSON.stringify(updated));
+      return updated;
+    });
+  };
+
+  const handlePermanentDelete = (id: string) => {
+    // Permanently removes from Bin
+    setMemories(prev => {
+      const updated = prev.filter(m => m.id !== id);
+      localStorage.setItem('jinyao_memories', JSON.stringify(updated));
+      return updated;
+    });
   };
 
   // --- Render ---
@@ -332,11 +364,9 @@ const App: React.FC = () => {
           {currentView === 'MEMORY' && (
             <MemoryCorridor 
               memories={memories} 
-              onDelete={(id) => {
-                const updated = memories.filter(m => m.id !== id);
-                setMemories(updated);
-                localStorage.setItem('jinyao_memories', JSON.stringify(updated));
-              }}
+              onDelete={handleSoftDelete}
+              onRestore={handleRestore}
+              onPermanentDelete={handlePermanentDelete}
             />
           )}
           

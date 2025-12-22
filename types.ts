@@ -21,6 +21,7 @@ export interface DiaryEntry {
   title: string;
   content: string;
   weatherMode: WeatherMode;
+  isDeleted?: boolean; // New field for Recycle Bin
 }
 
 export interface ParticleSettings {
