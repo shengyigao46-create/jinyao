@@ -385,7 +385,7 @@ const App: React.FC = () => {
 
           {currentView === 'INFO' && (
              <div className="pointer-events-auto p-12 max-w-3xl text-center glass-panel rounded-xl shadow-2xl z-20">
-               <h2 className="text-4xl font-serif mb-6 text-emerald-400">About JinYao</h2>
+               <h2 className="text-4xl font-serif mb-6 text-emerald-400">To 槿尧</h2>
                <p className="text-lg leading-relaxed text-gray-300 font-serif">
                  <br />Snow comes to rest upon the window, and upon the heart.
                  <br />In letting-be the order of nature, the heart becomes free.
